@@ -1,0 +1,133 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Employee Collaboration Tracker</title>
+    <link rel="stylesheet" href="/css/style.css">
+</head>
+<body>
+<div id="loader-overlay">
+    <div class="spinner"></div>
+    <div style="font-weight:bold">Processing...</div>
+</div>
+
+<div class="main-card">
+    <div class="header-text">
+        <h2>Employee Collaboration Tool</h2>
+        <div class="engine-info">
+            {% if isCarbonActive %}
+                <small class="engine-status-active">Engine: Carbon</small>
+            {% else %}
+                <small class="engine-status-fallback">Engine: PHP Native (Fallback)</small>
+            {% endif %}
+        </div>
+    </div>
+
+    {% if rawEmployees is empty and not longestPair %}
+        <div class="upload-row">
+            <form id="uploadForm" method="POST" enctype="multipart/form-data">
+                <div class="form-group">
+                    <label class="main-label">Date Format in file:</label>
+                    <span class="format-hint">Various date separators and date formats are supported,
+                        but you need to choose between American or European format as this cannot be assumed automatically reliably.
+                    </span>
+                    <label class="format-option"><input type="radio" name="date_format" value="EU" checked> European (day before month)</label>
+                    <label class="format-option"><input type="radio" name="date_format" value="US"> American (month before day)</label>
+                </div>
+                <div class="form-group">
+                    <label class="main-label">Select CSV File</label>
+                    <input type="file" name="csv_file" id="csvInput" accept=".csv" required>
+                </div>
+            </form>
+        </div>
+    {% endif %}
+
+    {% if errors is not empty %}
+        <div class="error-container">
+            <strong>Errors:</strong>
+            <ul>
+                {% for error in errors %}
+                    <li>{{ error }}</li>
+                {% endfor %}
+            </ul>
+        </div>
+    {% endif %}
+
+    {% if longestPair %}
+        <div class="data-section">
+            <h3>Longest Collaboration</h3>
+            <p>Employees #{{ longestPair.employeeId1 }} and #{{ longestPair.employeeId2 }}</p>
+            <table>
+                <thead>
+                <tr>
+                    <th>Employee ID #1</th>
+                    <th>Employee ID #2</th>
+                    <th>Project ID</th>
+                    <th>Days Worked Together</th>
+                </tr>
+                </thead>
+                <tbody>
+                {% for project in pairProjects %}
+                    <tr>
+                        <td>{{ project.employeeId1 }}</td>
+                        <td>{{ project.employeeId2 }}</td>
+                        <td>{{ project.projectId }}</td>
+                        <td>{{ project.days }}</td>
+                    </tr>
+                {% endfor %}
+                <tr class="total-row">
+                    <td colspan="3" style="text-align: right;">Total Duration:</td>
+                    <td>{{ longestPair.total }} days</td>
+                </tr>
+                </tbody>
+            </table>
+            <div style="margin-top:30px">
+                <a href="/index.php" class="btn-link">Start Over</a>
+            </div>
+        </div>
+    {% endif %}
+
+    {% if rawEmployees is not empty and not longestPair %}
+        <div class="data-section">
+            {% if errors is empty %}
+                <h3>File Preview</h3>
+                <table>
+                    <thead>
+                    <tr>
+                        <th>Employee ID</th>
+                        <th>Project ID</th>
+                        <th>Date From</th>
+                        <th>Date To</th>
+                    </tr>
+                    </thead>
+                    <tbody>
+                    {% for employeeId, periods in rawEmployees %}
+                        {% for period in periods %}
+                            <tr>
+                                <td>{{ employeeId }}</td>
+                                <td>{{ period.projectId }}</td>
+                                <td>{{ period.startDate|date("d-m-Y") }}</td>
+                                <td>{{ period.endDate|date("d-m-Y") }}</td>
+                            </tr>
+                        {% endfor %}
+                    {% endfor %}
+                    </tbody>
+                </table>
+                <div style="margin-top:30px">
+                    <form id="calculateForm" method="POST" style="display:inline">
+                        <input type="hidden" name="serialized_data" value="{{ serializedData }}">
+                        <button type="submit" name="calculate" class="btn-calculate">Find Longest Collaboration</button>
+                    </form>
+                    <a href="/index.php" class="btn-link btn-cancel">Cancel</a>
+                </div>
+            {% else %}
+                <div style="margin-top:30px">
+                    <a href="/index.php" class="btn-link">Start Over</a>
+                </div>
+            {% endif %}
+        </div>
+    {% endif %}
+</div>
+<script src="/js/app.js"></script>
+</body>
+</html>
